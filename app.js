@@ -2,7 +2,8 @@
    TodoList — Victor Rivera
  */
 
-const API = "http://localhost:8080";
+/*const API = "http://localhost:8080";*///para local
+const API = "https://mitodo-backend-production.up.railway.app"; //para publico
 
 let auth        = null;   // cabecera Basic
 let currentUser = null;   // { id, username, email, fullname, role }
