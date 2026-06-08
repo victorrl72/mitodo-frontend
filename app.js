@@ -410,14 +410,14 @@ function renderTareas(tareas) {
         meta.appendChild(badge("s-" + t.status,   labelStatus(t.status)));
 
         if (t.category) {
-            meta.appendChild(badge("cat", + t.category));
+            meta.appendChild(badge("cat", "📁 " + t.category));
         }
         if (t.tags && t.tags.size !== 0) {
             const tagsArr = Array.isArray(t.tags) ? t.tags : [...t.tags];
             tagsArr.forEach(tagName => meta.appendChild(badge("tag", "#" + tagName)));
         }
         if (t.deadline) {
-            const dl = badge("deadline", + formatDeadline(t.deadline));
+            const dl = badge("deadline", "⏰ " + formatDeadline(t.deadline));
             if (isOverdue(t)) dl.classList.add("overdue");
             meta.appendChild(dl);
         }
