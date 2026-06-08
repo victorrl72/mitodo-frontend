@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoList — Victor Rivera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<button id="btn-theme-toggle">☀️/🌙</button>
+
+<!-- Toast notifications -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ═══════════════════════════ LOGIN / REGISTER VIEW ═══════════════════════════ -->
+<main id="auth-view" class="view active-view">
+    <div class="auth-bg">
+        <div class="auth-noise"></div>
+        <div class="auth-orb auth-orb--1"></div>
+        <div class="auth-orb auth-orb--2"></div>
+    </div>
+
+    <div class="auth-panel">
+        <div class="auth-brand">
+            <span class="brand-icon">✦</span>
+            <span class="brand-name">Proyecto intermodular</span>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="panel-login" class="auth-form-wrap">
+            <h1>Bienvenido de nuevo</h1>
+            <p class="auth-sub">Accede con tus credenciales para continuar</p>
+
+            <div class="form-group">
+                <label for="login-username">Usuario</label>
+                <input type="text" id="login-username" placeholder="nombre de usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button id="btn-login" class="btn btn-primary w-full">Entrar</button>
+
+            <p class="auth-switch">¿No tienes cuenta? <a href="#" id="link-to-register">Regístrate</a></p>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="panel-register" class="auth-form-wrap hidden">
+            <h1>Crear cuenta</h1>
+            <p class="auth-sub">Únete y gestiona tus tareas</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="reg-username">Usuario</label>
+                    <input type="text" id="reg-username" placeholder="victor">
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" placeholder="email@ejemplo.com">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="reg-fullname">Nombre completo</label>
+                <input type="text" id="reg-fullname" placeholder="Victor Rivera">
+            </div>
+            <div class="form-group">
+                <label for="reg-password">Contraseña</label>
+                <input type="password" id="reg-password" placeholder="Mínimo 5 caracteres">
+            </div>
+            <button id="btn-register" class="btn btn-accent w-full">Crear cuenta</button>
+
+            <p class="auth-switch">¿Ya tienes cuenta? <a href="#" id="link-to-login">Inicia sesión</a></p>
+        </div>
+    </div>
+</main>
+
+<!-- ═══════════════════════════ APP VIEW ═══════════════════════════ -->
+<div id="app-view" class="view">
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-brand">
+            <span class="brand-icon">✦</span>
+            <span class="brand-name">Proyecto intermodular</span>
+        </div>
+        <div class="header-user">
+            <span id="user-greeting">Hola</span>
+            <span id="user-role-badge" class="role-badge">USER</span>
+        </div>
+        <button id="btn-logout" class="btn btn-ghost">Salir →</button>
+    </header>
+
+    <!-- Layout principal -->
+    <div class="app-layout">
+
+        <!-- ─── SIDEBAR ─── -->
+        <aside class="sidebar">
+
+            <!-- Dashboard Stats -->
+            <section class="widget">
+                <h3 class="widget-title">Panel</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-num" id="stat-total">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-card stat-card--green">
+                        <span class="stat-num" id="stat-completed">0</span>
+                        <span class="stat-label">Hechas</span>
+                    </div>
+                    <div class="stat-card stat-card--amber">
+                        <span class="stat-num" id="stat-pending">0</span>
+                        <span class="stat-label">Pendientes</span>
+                    </div>
+                    <div class="stat-card stat-card--red">
+                        <span class="stat-num" id="stat-overdue">0</span>
+                        <span class="stat-label">Vencidas</span>
+                    </div>
+                </div>
+                <div class="stat-extra" id="stat-today-wrap">
+                    <span>Creadas hoy:</span>
+                    <strong id="stat-today">0</strong>
+                </div>
+            </section>
+
+            <!-- Categorías -->
+            <section class="widget">
+                <h3 class="widget-title">Categorías</h3>
+                <div id="admin-cat-form" class="hidden">
+                    <div class="inline-form">
+                        <input type="text" id="nueva-cat-titulo" placeholder="Nueva categoría…">
+                        <button id="btn-crear-cat" class="btn btn-sm btn-primary">+</button>
+                    </div>
+                </div>
+                <div id="cat-list" class="chip-list"></div>
+            </section>
+
+            <!-- Tags -->
+            <section class="widget">
+                <h3 class="widget-title">Mis Tags</h3>
+                <div class="inline-form">
+                    <input type="text" id="nuevo-tag-nombre" placeholder="Nuevo tag…">
+                    <button id="btn-crear-tag" class="btn btn-sm btn-accent">+</button>
+                </div>
+                <div id="tags-container" class="chip-list mt-2"></div>
+            </section>
+
+            <!-- Perfil -->
+            <section class="widget">
+                <h3 class="widget-title">Mi Perfil</h3>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="profile-email" placeholder="nuevo@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="profile-fullname" placeholder="Nombre Apellidos">
+                </div>
+                <div class="form-group">
+                    <label>Nueva contraseña</label>
+                    <input type="password" id="profile-password" placeholder="Dejar vacío para no cambiar">
+                </div>
+                <button id="btn-update-profile" class="btn btn-sm btn-ghost w-full">Guardar cambios</button>
+            </section>
+
+        </aside>
+
+        <!-- ─── CONTENIDO PRINCIPAL ─── -->
+        <main class="main-content">
+
+            <!-- Formulario crear/editar tarea -->
+            <section class="card" id="section-form">
+                <div class="card-header">
+                    <h3 id="form-title">Nueva tarea</h3>
+                    <button id="btn-cancel-edit" class="btn btn-ghost btn-sm hidden">✕ Cancelar</button>
+                </div>
+
+                <div class="form-grid-3">
+                    <div class="form-group span-2">
+                        <label for="tarea-titulo">Título <span class="required">*</span></label>
+                        <input type="text" id="tarea-titulo" placeholder="¿Qué hay que hacer?">
+                        <span class="error-msg" id="error-titulo">El título es obligatorio.</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="tarea-deadline">Deadline</label>
+                        <input type="datetime-local" id="tarea-deadline">
+                    </div>
+                    <div class="form-group span-3">
+                        <label for="tarea-descripcion">Descripción</label>
+                        <textarea id="tarea-descripcion" rows="2" placeholder="Detalles adicionales…"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tarea-prioridad">Prioridad</label>
+                        <select id="tarea-prioridad">
+                            <option value="LOW">🟢 Baja</option>
+                            <option value="MEDIUM" selected>🟡 Media</option>
+                            <option value="HIGH">🟠 Alta</option>
+                            <option value="CRITICAL">🔴 Crítica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tarea-status">Estado</label>
+                        <select id="tarea-status">
+                            <option value="PENDING">Pendiente</option>
+                            <option value="IN_PROGRESS">En progreso</option>
+                            <option value="PARTIALLY_DONE">Parcialmente hecha</option>
+                            <option value="DONE">Completada</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tarea-categoria">Categoría</label>
+                        <select id="tarea-categoria">
+                            <option value="">Sin categoría</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button id="btn-guardar-tarea" class="btn btn-primary">Guardar tarea</button>
+                </div>
+            </section>
+
+            <!-- Buscador -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Buscador</h3>
+                    <button id="btn-limpiar-filtros" class="btn btn-ghost btn-sm">Limpiar filtros</button>
+                </div>
+
+                <div class="search-controls">
+                    <div class="form-group">
+                        <label for="search-type">Filtrar por</label>
+                        <select id="search-type">
+                            <option value="all">Todas las tareas</option>
+                            <option value="title">Título contiene…</option>
+                            <option value="description">Descripción contiene…</option>
+                            <option value="completed">Estado completado</option>
+                            <option value="priority">Prioridad exacta</option>
+                            <option value="status">Estado de progreso</option>
+                            <option value="category">Categoría</option>
+                            <option value="deadlineBefore">Deadline antes de…</option>
+                            <option value="deadlineAfter">Deadline después de…</option>
+                            <option value="overdue">Vencidas e incompletas</option>
+                            <option value="byTag">Por tag (nombre)</option>
+                            <option value="byTags">Por varios tags (IDs)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="search-param-wrap">
+                        <!-- texto -->
+                        <label id="search-label">Criterio</label>
+                        <input type="text"  id="search-text"     placeholder="Escribe para buscar…" class="hidden">
+                        <input type="datetime-local" id="search-date" class="hidden" title="Fecha" aria-labelledby="search-label">
+                        <select id="search-completed-sel" class="hidden" aria-label="Estado completado" title="Estado completado">
+                            <option value="true">Completadas</option>
+                            <option value="false">Pendientes</option>
+                        </select>
+                        <select id="search-priority-sel" class="hidden" title="Prioridad" aria-label="Prioridad">
+                            <option value="LOW">Baja</option>
+                            <option value="MEDIUM">Media</option>
+                            <option value="HIGH">Alta</option>
+                            <option value="CRITICAL">Crítica</option>
+                        </select>
+                        <select id="search-status-sel" class="hidden" title="Estado" aria-label="Estado">
+                            <option value="PENDING">Pendiente</option>
+                            <option value="IN_PROGRESS">En progreso</option>
+                            <option value="PARTIALLY_DONE">Parcialmente hecha</option>
+                            <option value="DONE">Completada</option>
+                        </select>
+                        <select id="search-category-sel" class="hidden" title="Categoría" aria-label="Categoría"></select>
+                        <input type="text" id="search-tagids" placeholder="IDs separados por coma: 1,2,3" class="hidden">
+                    </div>
+
+                    <div class="form-group search-btn-wrap">
+                        <label>&nbsp;</label>
+                        <button id="btn-buscar" class="btn btn-primary">Buscar</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lista de tareas -->
+            <section class="card">
+                <div class="card-header">
+                    <h3>Tareas <span id="tasks-count" class="count-badge">0</span></h3>
+                </div>
+                <div id="lista-tareas" class="task-list">
+                    <p class="empty-state">Cargando tareas…</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<!-- Modal editar tarea (no visible por defecto) -->
+<div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar tarea</h3>
+            <button id="modal-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="modal-titulo">Título</label>
+                <input type="text" id="modal-titulo" title="Título de la tarea" placeholder="Introduce el título de la tarea" aria-label="Título de la tarea">
+            </div>
+            <div class="form-group">
+                <label for="modal-descripcion">Descripción</label>
+                <textarea id="modal-descripcion" rows="2" title="Descripción" placeholder="Descripción de la tarea"></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Prioridad</label>
+                    <select id="modal-prioridad" aria-label="Prioridad" title="Prioridad">
+                        <option value="LOW">Baja</option>
+                        <option value="MEDIUM">Media</option>
+                        <option value="HIGH">Alta</option>
+                        <option value="CRITICAL">Crítica</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modal-status">Estado</label>
+                    <select id="modal-status" aria-label="Estado">
+                        <option value="PENDING">Pendiente</option>
+                        <option value="IN_PROGRESS">En progreso</option>
+                        <option value="PARTIALLY_DONE">Parcialmente hecha</option>
+                        <option value="DONE">Completada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="modal-deadline">Deadline</label>
+                    <input type="datetime-local" id="modal-deadline" title="Fecha y hora límite" placeholder="AAAA-MM-DDTHH:MM">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="modal-categoria" title="Categoría">
+                        <option value="">Sin categoría</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="modal-cancel" class="btn btn-ghost">Cancelar</button>
+            <button id="modal-save" class="btn btn-primary">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
