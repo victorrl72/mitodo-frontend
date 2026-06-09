@@ -34,12 +34,12 @@
     --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
     --shadow-glow: 0 0 20px var(--accent-glow);
 
-    /* Fondos especiales (Nuevas variables) */
+    /* Fondos especiales*/
     --panel-bg:    rgba(20, 23, 32, 0.85);
     --overlay-bg:  rgba(0, 0, 0, 0.7);
 }
 
-/* ─── Reset ─── */
+/*Reset*/
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { scroll-behavior: smooth; }
@@ -58,21 +58,21 @@ h1, h2, h3, .brand-name {
     letter-spacing: -0.02em;
 }
 
-/* ─── Utilidades ─── */
+/* Utilidades  */
 .hidden      { display: none !important; }
 .w-full      { width: 100%; }
 .mt-2        { margin-top: 0.5rem; }
 .mt-4        { margin-top: 1rem; }
 .required    { color: var(--accent-2); }
 
-/* ─── Vistas ─── */
+/* Vistas */
 .view { display: none; min-height: 100vh; }
 .active-view { display: block; }
 #auth-view.active-view { display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
 
-/* ═══════════════════════
+/* 
    AUTH VIEW
-════════════════════════ */
+ */
 .auth-bg {
     position: absolute; inset: 0; z-index: 0;
     background: radial-gradient(ellipse 80% 60% at 60% 40%, #1a2040 0%, var(--bg) 70%);
@@ -137,9 +137,9 @@ h1, h2, h3, .brand-name {
 .auth-switch a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .auth-switch a:hover { text-decoration: underline; }
 
-/* ═══════════════════════
-   APP HEADER
-════════════════════════ */
+/* 
+HEADER
+ */
 .app-header {
     display: flex; align-items: center; gap: 1rem;
     padding: 0.9rem 2rem;
@@ -170,9 +170,9 @@ h1, h2, h3, .brand-name {
 .role-badge.ADMIN  { background: rgba(249,115,22,0.15); color: var(--accent-2); border-color: var(--accent-2); }
 .role-badge.GESTOR { background: rgba(34,197,94,0.15);  color: var(--green);    border-color: var(--green); }
 
-/* ═══════════════════════
-   APP LAYOUT
-════════════════════════ */
+/* 
+ LAYOUT
+ */
 .app-layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -185,7 +185,7 @@ h1, h2, h3, .brand-name {
     .app-layout { grid-template-columns: 300px 1fr; }
 }
 
-/* ─── Sidebar ─── */
+/* Sidebar */
 .sidebar { display: flex; flex-direction: column; gap: 1rem; }
 
 .widget {
@@ -234,7 +234,7 @@ h1, h2, h3, .brand-name {
     border-top: 1px solid var(--border);
 }
 
-/* --- Chips / Tags List --- */
+/* Chip Tags List */
 .chip-list { 
     display: flex; 
     flex-wrap: wrap; 
@@ -262,7 +262,7 @@ h1, h2, h3, .brand-name {
     color: var(--text); 
 }
 
-/* Variante específica para Tags (Color azulado) */
+/* Variante específica para Tags */
 .chip.tag { 
     color: var(--accent); 
     border-color: rgba(91,124,250,0.3); 
@@ -273,8 +273,6 @@ h1, h2, h3, .brand-name {
     background: rgba(91,124,250,0.18); 
 }
 
-/* ESTADO ACTIVO (Lo más importante para tu filtro) */
-/* Al ponerlo al final, sobreescribe los colores de .tag o .chip normal */
 .chip.active {
     background-color: var(--primary-color, #3b82f6) !important;
     color: white !important;
@@ -293,10 +291,10 @@ h1, h2, h3, .brand-name {
 .inline-form { display: flex; gap: 0.4rem; }
 .inline-form input { flex: 1; }
 
-/* ─── Contenido principal ─── */
+/* Contenido principal */
 .main-content { display: flex; flex-direction: column; gap: 1rem; }
 
-/* Cards */
+/* Tarjetas */
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -320,7 +318,7 @@ h1, h2, h3, .brand-name {
     vertical-align: middle; margin-left: 0.4rem;
 }
 
-/* ─── Grids formulario ─── */
+/*Grids formulario */
 .form-grid-3 {
     display: grid;
     grid-template-columns: 1fr;
@@ -341,7 +339,7 @@ h1, h2, h3, .brand-name {
 .error-msg { color: var(--red); font-size: 0.78rem; display: none; }
 .error-msg.visible { display: block; }
 
-/* ─── Search controls ─── */
+/* CONTROLADORES Y BUSQUEDAS*/
 .search-controls {
     display: grid;
     grid-template-columns: 1fr;
@@ -353,9 +351,9 @@ h1, h2, h3, .brand-name {
 }
 .search-btn-wrap { display: flex; align-items: flex-end; }
 
-/* ═══════════════════════
-   INPUTS & SELECTS
-════════════════════════ */
+/* 
+   INPUTS Y SELECTS
+ */
 input, select, textarea {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -377,9 +375,9 @@ select option { background: var(--surface-2); }
 textarea { resize: vertical; min-height: 60px; }
 input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
 
-/* ═══════════════════════
-   BUTTONS
-════════════════════════ */
+/* 
+   BOTONES
+ */
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
     padding: 0.6rem 1.2rem;
@@ -495,9 +493,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert
     padding: 2.5rem; font-size: 0.9rem;
 }
 
-/* ═══════════════════════
+/*
    MODAL
-════════════════════════ */
+ */
 .modal-overlay {
     position: fixed; inset: 0; z-index: 200;
     background: var(--overlay-bg);
@@ -530,9 +528,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert
     border-top: 1px solid var(--border);
 }
 
-/* ═══════════════════════
+/* 
    TOASTS
-════════════════════════ */
+*/
 #toast-container {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     z-index: 9999;
@@ -558,7 +556,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert
 /*
 cambiar tema
 */
-/* --- MODO CLARO DEFINITIVO --- */
+/* MODO CLARO  */
 body.light-theme {
     --bg:          #f1f5f9;
     --surface:     #ffffff;

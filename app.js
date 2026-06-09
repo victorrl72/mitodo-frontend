@@ -135,7 +135,18 @@ async function handleRegister() {
         fullname: document.getElementById("reg-fullname").value.trim(),
         password: document.getElementById("reg-password").value.trim()
     };
-    if (!cmd.username || !cmd.email || !cmd.password) { toast("Completa todos los campos", "error"); return; }
+    
+    // Comprobar que los campos no estén vacíos
+    if (!cmd.username || !cmd.email || !cmd.password) { 
+        toast("Completa todos los campos", "error"); 
+        return; 
+    }
+
+    // Validar que la contraseña tenga mínimo 5 caracteres
+    if (cmd.password.length < 5) { 
+        toast("La contraseña debe tener al menos 5 caracteres", "error"); 
+        return; 
+    }
 
     try {
         const res = await fetch(API + "/auth/register", {
