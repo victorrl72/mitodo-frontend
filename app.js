@@ -1,17 +1,17 @@
-/* 
-   TodoList — Victor Rivera
+/* TodoList — Victor Rivera
  */
 
-/*const API = "http://localhost:8080";*///para local
-const API = "https://mitodo-backend-production.up.railway.app"; //para publico
+// const API = "http://localhost:8080"; // para local
+const API = "https://mitodo-backend-production.up.railway.app"; // para publico
 
-let auth        = null;   // cabecera Basic
-let currentUser = null;   // { id, username, email, fullname, role }
-let allCategories = [];   // cache de categorías
-let allTags       = [];   // cache de tags del usuario
-let allTasks = [];        // Para guardar todas las tareas 
-let editingTaskId = null; // ID de la tarea que se está editando
-let currentFilterCatName = null;  // recordar la categoría seleccionada en el filtro de búsqueda
+// Estado global con persistencia en localStorage
+let auth        = localStorage.getItem("auth") || null;
+let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let allCategories = [];   
+let allTags       = [];   
+let allTasks = [];        
+let editingTaskId = null; 
+let currentFilterCatName = null;  
 let currentFilterTagName = null;
 
 // Referencias DOM
@@ -20,7 +20,7 @@ const appView   = document.getElementById("app-view");
 const toastBox  = document.getElementById("toast-container");
 
 // Init
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     // Auth
     document.getElementById("btn-login").addEventListener("click", handleLogin);
     document.getElementById("btn-register").addEventListener("click", handleRegister);
@@ -59,35 +59,29 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("modal-save").addEventListener("click",   handleModalSave);
     document.getElementById("modal-overlay").addEventListener("click", e => { if (e.target === document.getElementById("modal-overlay")) closeModal(); });
 
-    // --- Lógica del botón de Tema ---
+    // Lógica del botón de Tema
     const btnTheme = document.getElementById("btn-theme-toggle");
-    
-    // Al cargar, verifica si el usuario ya eligió modo antes
     if (localStorage.getItem("theme") === "light") {
         document.body.classList.add("light-theme");
     }
 
     btnTheme.addEventListener("click", () => {
         document.body.classList.toggle("light-theme");
-        
-        // Guarda la preferencia en el navegador
         const isLight = document.body.classList.contains("light-theme");
         localStorage.setItem("theme", isLight ? "light" : "dark");
     });
-    const btnCat = document.getElementById("btn-crear-cat");
-    if (btnCat) {
-        btnCat.addEventListener("click", handleCreateCategory);
-    }
-    const btnTag = document.getElementById("btn-crear-tag");
-    if (btnTag) {
-        btnTag.addEventListener("click", handleCreateTag);
-    }
 
+    // Restaurar sesión si existe
+    if (auth && currentUser) {
+        document.getElementById("user-greeting").textContent = "Hola, " + currentUser.fullname;
+        authView.classList.remove("active-view");
+        appView.classList.add("active-view");
+        await cargarApp();
+    }
 });
 
 
 //  TOASTS
-
 function toast(msg, type = "info") {
     const el = document.createElement("div");
     el.className = `toast ${type}`;
@@ -98,7 +92,6 @@ function toast(msg, type = "info") {
 
 
 //  AUTH
-
 function showPanel(name) {
     document.getElementById("panel-login").classList.toggle("hidden", name !== "login");
     document.getElementById("panel-register").classList.toggle("hidden", name !== "register");
@@ -110,15 +103,18 @@ async function handleLogin() {
     if (!u || !p) { toast("Rellena usuario y contraseña", "error"); return; }
 
     const header = "Basic " + btoa(u + ":" + p);
-    // Verificamos credenciales pidiendo el dashboard
+    
     try {
         const res = await fetch(API + "/dashboard", { headers: { Authorization: header } });
         if (res.status === 401) { toast("Credenciales incorrectas", "error"); return; }
 
-        // Guardamos auth y cargamos usuario desde el registro (lo obtenemos con GET /task vacío para ver si responde)
         auth = header;
-        // Deducimos usuario de la cabecera para greeting inicial
         currentUser = { username: u, fullname: u, role: "USER" };
+        
+        // Guardar sesión en el navegador
+        localStorage.setItem("auth", auth);
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
         document.getElementById("user-greeting").textContent = "Hola, " + u;
 
         authView.classList.remove("active-view");
@@ -171,6 +167,9 @@ async function handleRegister() {
 
 function logout() {
     auth = null; currentUser = null;
+    localStorage.removeItem("auth");
+    localStorage.removeItem("currentUser");
+    
     appView.classList.remove("active-view");
     authView.classList.add("active-view");
     document.getElementById("login-username").value = "";
@@ -179,34 +178,31 @@ function logout() {
 
 
 //  CARGA INICIAL
-
 async function cargarApp() {
     await Promise.all([cargarCategorias(), cargarTags(), cargarDashboard()]);
     await cargarTareas();
 }
 
-// Dashboard
 async function cargarDashboard() {
     try {
         const res = await apiFetch("/dashboard");
         if (!res.ok) return;
         const d = await res.json();
-        // DashboardDto: { totalTasks, completedTasks, pendingTasks, overdueTask, createdToday, tasksByCategory, tasksByTag }
+        
         set("stat-total",     d.totalTasks     ?? 0);
         set("stat-completed", d.completedTasks ?? 0);
         set("stat-pending",   d.pendingTasks   ?? 0);
         set("stat-overdue",   d.overdueTask    ?? 0);
         set("stat-today",     d.createdToday   ?? 0);
 
-        // Si tenemos el role real actualizamos el badge
         if (currentUser && d.role) {
             currentUser.role = d.role;
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
             actualizarRolBadge();
         }
     } catch {}
 }
 
-// Categorías
 async function cargarCategorias() {
     try {
         const res = await apiFetch("/categories");
@@ -215,7 +211,6 @@ async function cargarCategorias() {
         rellenarSelectCategorias();
         renderChipsCategorias();
 
-        // Mostrar formulario creación solo a ADMIN / GESTOR
         if (currentUser && (currentUser.role === "ADMIN" || currentUser.role === "GESTOR")) {
             document.getElementById("admin-cat-form").classList.remove("hidden");
         }
@@ -239,29 +234,18 @@ function rellenarSelectCategorias() {
         sel.value = prev;
     });
 }
-function renderFilteredTasks() {
-    // 1. Filtramos: Si no hay categoría (null), mostramos todas. Si hay, filtramos.
-    
-    const listaFiltrada = currentFilterCatName 
-        ? allTasks.filter(t => t.category === currentFilterCatName) 
-        : allTasks;
-
-    renderTareas(listaFiltrada);
-}
 
 function renderChipsCategorias() {
     const wrap = document.getElementById("cat-list");
     wrap.innerHTML = "";
     
-    // Opción para "Ver todas"
     const allChip = document.createElement("span");
-    // Clase active si no hay ningún filtro de categoría activo
     allChip.className = "chip" + (currentFilterCatName === null ? " active" : "");
     allChip.textContent = "Todas";
     allChip.onclick = () => { 
         currentFilterCatName = null; 
         applyFiltersAndRender(); 
-        renderChipsCategorias(); // Refrescamos colores
+        renderChipsCategorias(); 
     };
     wrap.appendChild(allChip);
 
@@ -274,7 +258,7 @@ function renderChipsCategorias() {
         chip.onclick = () => {
             currentFilterCatName = c.title; 
             applyFiltersAndRender(); 
-            renderChipsCategorias(); // Refrescamos colores
+            renderChipsCategorias(); 
         };
         wrap.appendChild(chip);
     });
@@ -285,7 +269,6 @@ async function handleCreateCategory() {
     const title = input.value.trim();
     if (!title) return;
 
-    // Intentamos primero /manager/categories (GESTOR o ADMIN), fallback /admin/categories
     let res = await apiFetch("/manager/categories", "POST", { title });
     if (res.status === 403) res = await apiFetch("/admin/categories", "POST", { title });
 
@@ -298,7 +281,6 @@ async function handleCreateCategory() {
     }
 }
 
-// Tags
 async function cargarTags() {
     try {
         const res = await apiFetch("/tag");
@@ -319,20 +301,15 @@ function renderChipsTags() {
     allTags.forEach(tag => {
         const chip = document.createElement("span");
         
-        // Añadimos una clase 'active' si este tag es el que está seleccionado actualmente
         chip.className = "chip tag" + (currentFilterTagName === tag.name ? " active" : "");
         chip.innerHTML = `#${tag.name} <span class="chip-del" data-id="${tag.id}" title="Eliminar">✕</span>`;
 
-        // Lógica de clic para filtrar
         chip.onclick = () => {
-            // Si hago clic en el mismo tag que ya está activo, se desactiva (null)
             currentFilterTagName = (currentFilterTagName === tag.name) ? null : tag.name;
-            
-            applyFiltersAndRender(); // Ejecuta tu nueva lógica de filtrado
-            renderChipsTags();       // Redibujamos los chips para que cambie el color del activo
+            applyFiltersAndRender(); 
+            renderChipsTags();       
         };
 
-        // El botón de eliminar (que ya tenías)
         chip.querySelector(".chip-del").addEventListener("click", async e => {
             e.stopPropagation();
             await apiFetch("/tag/" + tag.id, "DELETE");
@@ -355,7 +332,6 @@ async function handleCreateTag() {
     } else { toast("Error al crear tag", "error"); }
 }
 
-// Perfil
 async function handleUpdateProfile() {
     const cmd = {};
     const email    = document.getElementById("profile-email").value.trim();
@@ -369,44 +345,42 @@ async function handleUpdateProfile() {
     const res = await apiFetch("/user/profile", "PUT", cmd);
     if (res.ok) {
         toast("Perfil actualizado", "success");
-        if (fullname) { currentUser.fullname = fullname; document.getElementById("user-greeting").textContent = "Hola, " + fullname; }
+        if (fullname) { 
+            currentUser.fullname = fullname; 
+            document.getElementById("user-greeting").textContent = "Hola, " + fullname; 
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        }
         document.getElementById("profile-password").value = "";
-        // Si cambiamos contraseña actualizamos header auth
+        
         if (password && currentUser) {
             auth = "Basic " + btoa(currentUser.username + ":" + password);
+            localStorage.setItem("auth", auth);
         }
     } else { toast("Error al actualizar perfil", "error"); }
 }
 
 
-//  TAREAS — Cargar
-
+//  TAREAS
 async function cargarTareas() {
     try {
         const res = await apiFetch("/task");
         const wrap = document.getElementById("lista-tareas");
         if (!res.ok) { wrap.innerHTML = '<p class="empty-state">Error cargando tareas</p>'; return; }
         
-        allTasks = await res.json(); // GUARDAMOS TODAS LAS TAREAS
-        applyFiltersAndRender();     // FILTRAMOS Y DIBUJAMOS
+        allTasks = await res.json(); 
+        applyFiltersAndRender();     
     } catch { 
         document.getElementById("lista-tareas").innerHTML = '<p class="empty-state">Error de red</p>'; 
     }
 }
 
-
-
 function applyFiltersAndRender() {
     const listaFiltrada = allTasks.filter(t => {
-        // Filtro de Categoría
         const matchCat = currentFilterCatName ? (t.category === currentFilterCatName) : true;
-        
-        // Filtro de Tag (t.tags es un array o Set)
-        // Asegúrate de normalizar los tags de la tarea para comparar
         const taskTags = Array.isArray(t.tags) ? t.tags : Array.from(t.tags || []);
         const matchTag = currentFilterTagName ? taskTags.includes(currentFilterTagName) : true;
 
-        return matchCat && matchTag; // Solo pasan las que cumplen AMBOS
+        return matchCat && matchTag; 
     });
 
     renderTareas(listaFiltrada);
@@ -426,25 +400,20 @@ function renderTareas(tareas) {
         const item = document.createElement("div");
         item.className = "task-item" + (t.completed || t.status === "DONE" ? " is-done" : "");
 
-        // Barra de prioridad lateral
         const bar = document.createElement("div");
         bar.className = "task-priority-bar " + (t.priority || "MEDIUM");
 
-        // Cuerpo
         const body = document.createElement("div");
         body.className = "task-body";
 
-        // Título
         const title = document.createElement("div");
         title.className = "task-title";
         title.textContent = t.title;
 
-        // Descripción
         const desc = document.createElement("div");
         desc.className = "task-desc";
         desc.textContent = t.description || "Sin descripción";
 
-        // Meta badges
         const meta = document.createElement("div");
         meta.className = "task-meta";
 
@@ -468,7 +437,6 @@ function renderTareas(tareas) {
         body.appendChild(desc);
         body.appendChild(meta);
 
-        // Acciones
         const actions = document.createElement("div");
         actions.className = "task-actions";
 
@@ -501,7 +469,6 @@ function renderTareas(tareas) {
     });
 }
 
-// Crear tarea
 async function handleSaveNewTask() {
     const titleEl = document.getElementById("tarea-titulo");
     const errorEl = document.getElementById("error-titulo");
@@ -523,17 +490,10 @@ async function handleSaveNewTask() {
         title:       titleVal,
         description: document.getElementById("tarea-descripcion").value.trim() || null,
         completed:   false,
-
-        //  Si la fecha tiene 16 caracteres (sin segundos), le concatenamos ":00"
         deadline:    rawDeadline ? (rawDeadline.length === 16 ? rawDeadline + ":00" : rawDeadline.slice(0, 19)) : null,
-
         priority:    document.getElementById("tarea-prioridad").value,
         status:      document.getElementById("tarea-status").value,
-
-        // Elige la opción que coincida con tu DTO de Java (descomenta la que uses):
         categoryId:  catId ? parseInt(catId) : null
-        // category:   catId ? parseInt(catId) : null          // <-- Opción B (Si en Java se llama "category" y es Long)
-        // category:   catId ? { id: parseInt(catId) } : null  // <-- Opción C (Si en Java espera el objeto Entidad completo)
     };
 
     const res = await apiFetch("/task", "POST", cmd);
@@ -547,7 +507,7 @@ async function handleSaveNewTask() {
         document.getElementById("tarea-categoria").value    = "";
         await cargarDashboard();
         await cargarTareas();
-    } else { toast("Error al crear la tarea (Código 400)", "error"); }
+    } else { toast("Error al crear la tarea", "error"); }
 }
 
 function cancelEdit() {
@@ -556,7 +516,6 @@ function cancelEdit() {
     document.getElementById("btn-cancel-edit").classList.add("hidden");
 }
 
-// Marcar como hecha
 async function toggleTask(t) {
     const nuevoStatus = (t.status === "DONE") ? "IN_PROGRESS" : "DONE";
     const cat = allCategories.find(c => c.title === t.category);
@@ -574,7 +533,6 @@ async function toggleTask(t) {
     else { toast("No autorizado para editar esta tarea", "error"); }
 }
 
-//Eliminar tarea
 async function deleteTask(id) {
     if (!confirm("¿Eliminar esta tarea permanentemente?")) return;
     const res = await apiFetch("/task/" + id, "DELETE");
@@ -585,9 +543,7 @@ async function deleteTask(id) {
     } else { toast("No autorizado para eliminar esta tarea", "error"); }
 }
 
-//
 //  EDITAR
-//
 function openModal(t) {
     editingTaskId = t.id;
     document.getElementById("modal-titulo").value       = t.title || "";
@@ -596,10 +552,8 @@ function openModal(t) {
     document.getElementById("modal-status").value       = t.status   || "PENDING";
     document.getElementById("modal-deadline").value     = t.deadline ? t.deadline.slice(0, 16) : "";
 
-    // Rellenar select categoría del modal
     rellenarSelectCategorias();
     const modalCat = document.getElementById("modal-categoria");
-    // El DTO devuelve category como string (título), necesitamos buscar el ID
     const cat = allCategories.find(c => c.title === t.category);
     modalCat.value = cat ? cat.id : "";
 
@@ -618,10 +572,8 @@ async function handleModalSave() {
 
     const cmd = {
         title:       document.getElementById("modal-titulo").value.trim(),
-        // CORRECCIÓN AQUÍ: Cambiado 'modal-description' por 'modal-descripcion'
         description: document.getElementById("modal-descripcion").value.trim() || null, 
         completed:   document.getElementById("modal-status").value === "DONE",
-
         deadline:    rawDeadline ? (rawDeadline.length === 16 ? rawDeadline + ":00" : rawDeadline.slice(0, 19)) : null,
         priority:    document.getElementById("modal-prioridad").value,
         status:      document.getElementById("modal-status").value,
@@ -639,14 +591,11 @@ async function handleModalSave() {
     } else { toast("No autorizado o error al editar esta tarea", "error"); }
 }
 
-//
 //  BUSCADOR
-//
 function ajustarBuscador() {
     const tipo = document.getElementById("search-type").value;
     const label = document.getElementById("search-label");
 
-    // Ocultar todos
     ["search-text","search-date","search-completed-sel",
      "search-priority-sel","search-status-sel",
      "search-category-sel","search-tagids"].forEach(id =>
@@ -671,7 +620,6 @@ function ajustarBuscador() {
         document.getElementById(maps[tipo][0]).classList.remove("hidden");
         label.textContent = maps[tipo][1];
     } else {
-        // all / overdue — no hay input
         document.getElementById("search-param-wrap").style.display = "none";
     }
 }
@@ -733,9 +681,7 @@ function limpiarFiltros() {
     cargarTareas();
 }
 
-
 //  auxiliar
-
 function apiFetch(path, method = "GET", body = null) {
     const opts = { method, headers: { Authorization: auth } };
     if (body) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
@@ -760,10 +706,10 @@ function labelPriority(p) {
 
 function labelStatus(s) {
     return {
-        PENDING:        "⏳ Pendiente",
-        IN_PROGRESS:    "🔄 En progreso",
-        PARTIALLY_DONE: "🔸 Parcial",
-        DONE:           "✅ Hecha"
+        PENDING:        "Pendiente",
+        IN_PROGRESS:    "En progreso",
+        PARTIALLY_DONE: "Parcial",
+        DONE:           "Hecha"
     }[s] || s;
 }
 
